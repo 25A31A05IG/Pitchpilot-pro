@@ -12,7 +12,11 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL 
+  ? import.meta.env.VITE_BACKEND_URL.replace(/\/+$/, '') 
+  : 'http://127.0.0.1:5000';
+
+const API_BASE = `${BACKEND_URL}/api`;
 
 export default function App() {
   const [repoUrl, setRepoUrl] = useState('');
@@ -183,7 +187,7 @@ export default function App() {
           </div>
           <div className="flex items-center gap-2 text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full text-emerald-400">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Backend Active (Port 5000)
+            System Live
           </div>
         </header>
 

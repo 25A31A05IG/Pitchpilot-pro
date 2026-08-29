@@ -38,6 +38,23 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [exportingPPTX, setExportingPPTX] = useState(false);
 
+  // Helper to extract slides regardless of backend key naming
+  const getSlides = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data.slides) && data.slides.length > 0) return data.slides;
+    if (Array.isArray(data.pitch_deck) && data.pitch_deck.length > 0) return data.pitch_deck;
+    // Default fallback 5-slide structure built from top-level fields
+    return [
+      { slide_number: 1, title: 'Problem & Opportunity', bullets: [data.problem_statement || 'Identified critical market friction.', 'Current alternatives lack automated efficiency.'] },
+      { slide_number: 2, title: 'Solution & Core Value', bullets: [`${data.project_name || 'Our platform'}: ${data.tagline || 'Next-gen solution'}.`, 'Seamless end-to-end integration and workflow automation.'] },
+      { slide_number: 3, title: 'Target Market & Reach', bullets: [data.target_market || 'B2B and high-growth developer teams.', 'Rapidly expanding addressable market opportunity.'] },
+      { slide_number: 4, title: 'Competitive Moat', bullets: [data.competitive_moat || 'Proprietary models and high switching barriers.', 'Defensible technical architecture.'] },
+      { slide_number: 5, title: 'Execution & Roadmap', bullets: ['Scalable deployment and automated monetization model.', 'Continuous agentic optimization and ecosystem expansion.'] }
+    ];
+  };
+
+  const slides = getSlides(pitchData);
+
   // 1. Analyze Repo
   const handleAnalyze = async (e) => {
     e.preventDefault();
@@ -45,6 +62,7 @@ export default function App() {
     setLoading(true);
     setPitchData(null);
     setJudgeFeedback(null);
+    setActiveSlide(0);
 
     try {
       const res = await fetch(`${API_BASE}/analyze`, {
@@ -175,12 +193,12 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-zinc-100 p-6 md:p-12 relative overflow-hidden font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="min-h-screen bg-[#07090e] text-zinc-100 p-6 md:p-12 relative overflow-hidden font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
       
-      {/* Background Decorative Ambient Glows */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-1/3 right-10 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-10 left-1/3 w-96 h-96 bg-fuchsia-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      {/* Dynamic Background Glows */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute top-1/3 right-10 w-[450px] h-[450px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute bottom-10 left-1/3 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[140px] pointer-events-none -z-10" />
 
       <div className="max-w-6xl mx-auto space-y-10">
         
@@ -192,20 +210,20 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                PitchPilot <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400 font-black text-xs px-2 py-0.5 rounded-full border border-cyan-400/30 bg-cyan-950/40">PRO</span>
+                PitchPilot <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400 font-black text-xs px-2.5 py-0.5 rounded-full border border-cyan-400/30 bg-cyan-950/40">PRO</span>
               </h1>
               <p className="text-xs font-medium text-zinc-400 mt-0.5">Autonomous Codebase-to-Pitch & VC Simulator</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 text-xs bg-zinc-900/90 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-emerald-400 shadow-sm backdrop-blur-md">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <div className="flex items-center gap-2 text-xs bg-zinc-900/90 border border-emerald-500/30 px-3.5 py-1.5 rounded-full text-emerald-400 shadow-sm backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span className="font-semibold tracking-wide">System Online</span>
           </div>
         </header>
 
         {/* Input Bar */}
-        <section className="bg-zinc-900/50 border border-zinc-800/90 p-5 md:p-6 rounded-3xl shadow-2xl backdrop-blur-xl relative group">
+        <section className="bg-zinc-900/40 border border-zinc-800/90 p-5 md:p-6 rounded-3xl shadow-2xl backdrop-blur-xl relative group">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/20 via-cyan-500/20 to-indigo-500/20 rounded-3xl blur opacity-30 group-hover:opacity-60 transition duration-500 pointer-events-none"></div>
           
           <form onSubmit={handleAnalyze} className="relative flex flex-col md:flex-row gap-3.5">
@@ -214,7 +232,7 @@ export default function App() {
               placeholder="Paste public GitHub repository URL (e.g. https://github.com/owner/repo)"
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
-              className="flex-1 bg-zinc-950/80 border border-zinc-700/60 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 rounded-2xl px-5 py-4 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition-all shadow-inner"
+              className="flex-1 bg-zinc-950/90 border border-zinc-700/60 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 rounded-2xl px-5 py-4 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition-all shadow-inner"
               required
             />
             <button
@@ -299,14 +317,14 @@ export default function App() {
                   <Layers className="w-5 h-5 text-indigo-400" />
                   5-Slide Investor Deck
                 </h3>
-                <span className="text-xs font-medium text-zinc-500 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-full">
-                  Slide {activeSlide + 1} of {pitchData.slides?.length || 5}
+                <span className="text-xs font-medium text-zinc-400 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-full">
+                  Slide {activeSlide + 1} of {slides.length}
                 </span>
               </div>
 
               {/* Slide Selector Pills */}
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                {pitchData.slides?.map((s, idx) => (
+                {slides.map((s, idx) => (
                   <button
                     key={idx}
                     onClick={() => setActiveSlide(idx)}
@@ -316,25 +334,25 @@ export default function App() {
                         : 'bg-zinc-900/80 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
                     }`}
                   >
-                    Slide {s.slide_number}: {s.title}
+                    Slide {s.slide_number || idx + 1}: {s.title}
                   </button>
                 ))}
               </div>
 
               {/* Active Slide Canvas */}
-              {pitchData.slides && pitchData.slides[activeSlide] && (
+              {slides[activeSlide] && (
                 <div className="bg-gradient-to-b from-zinc-900/90 to-zinc-950 border border-zinc-800/90 p-8 md:p-10 rounded-3xl shadow-xl min-h-[240px] relative overflow-hidden">
                   <div className="flex items-center justify-between border-b border-zinc-800/60 pb-4">
                     <span className="text-xs font-extrabold text-cyan-400 uppercase tracking-widest">
-                      Slide 0{pitchData.slides[activeSlide].slide_number}
+                      Slide 0{slides[activeSlide].slide_number || activeSlide + 1}
                     </span>
-                    <Presentation className="w-4 h-4 text-zinc-600" />
+                    <Presentation className="w-4 h-4 text-zinc-500" />
                   </div>
                   
-                  <h4 className="text-2xl font-bold text-white mt-4">{pitchData.slides[activeSlide].title}</h4>
+                  <h4 className="text-2xl font-bold text-white mt-4">{slides[activeSlide].title}</h4>
                   
                   <ul className="mt-6 space-y-3.5">
-                    {pitchData.slides[activeSlide].bullets.map((bullet, bIdx) => (
+                    {(slides[activeSlide].bullets || []).map((bullet, bIdx) => (
                       <li key={bIdx} className="flex items-start gap-3.5 text-zinc-300 text-sm md:text-base leading-relaxed">
                         <span className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500 mt-2 shrink-0 shadow-sm shadow-cyan-400/50"></span>
                         <span>{bullet}</span>
